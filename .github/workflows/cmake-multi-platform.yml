@@ -44,14 +44,15 @@ jobs:
           fi
         done
 
-    - name: Prepare artifacts
+    - name: Commit and push compiled files
       run: |
-        mkdir -p artifacts/bof_plugins
-        # Find all compiled .o files and copy them to the artifacts directory
-        find . -path "*/_bin/*.o" -exec cp --parents {} artifacts/bof_plugins/ \;
-
-    - name: Upload compiled BOFs
-      uses: actions/upload-artifact@v4
-      with:
-        name: bof-plugins
-        path: artifacts/
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add . # Stage all new/modified files
+        # Commit and push if there are changes
+        if ! git diff --staged --quiet; then
+          git commit -m "ci: Auto-compile and add BOF plugins"
+          git push
+        else
+          echo "No new compiled files to commit."
+        fi
