@@ -50,7 +50,7 @@ jobs:
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git add . # Stage all new/modified files
+        git add --force . # Forcefully stage all new/modified files (including those in .gitignore)
         # Commit and push if there are changes
         if ! git diff --staged --quiet; then
           git commit -m "ci: Auto-compile and add BOF plugins"
