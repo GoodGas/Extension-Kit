@@ -1,0 +1,59 @@
+name: Build BOF Plugins
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make mingw-w64 python3
+
+    - name: Compile all plugins
+      run: |
+        # List of directories with Makefiles
+        PLUGIN_DIRS=(
+          "AD-BOF"
+          "Creds-BOF"
+          "Elevation-BOF"
+          "Execution-BOF"
+          "Injection-BOF"
+          "Kerbeus-BOF"
+          "LateralMovement-BOF"
+          "Postex-BOF"
+          "Process-BOF"
+          "SAL-BOF"
+          "SAR-BOF"
+        )
+
+        for dir in "${PLUGIN_DIRS[@]}"; do
+          if [ -f "$dir/Makefile" ]; then
+            echo "--- Compiling in $dir ---"
+            (cd "$dir" && make)
+            echo "--- Finished compiling in $dir ---"
+            echo ""
+          else
+            echo "--- Makefile not found in $dir, skipping. ---"
+          fi
+        done
+
+    - name: Prepare artifacts
+      run: |
+        mkdir -p artifacts/bof_plugins
+        # Find all compiled .o files and copy them to the artifacts directory
+        find . -path "*/_bin/*.o" -exec cp --parents {} artifacts/bof_plugins/ \;
+
+    - name: Upload compiled BOFs
+      uses: actions/upload-artifact@v4
+      with:
+        name: bof-plugins
+        path: artifacts/
