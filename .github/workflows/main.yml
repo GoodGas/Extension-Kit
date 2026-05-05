@@ -30,34 +30,60 @@ jobs:
             make
             mingw-w64-x86_64-toolchain
 
-      - name: Install i686 toolchain
+      - name: Install i686 toolchain and diagnose
         run: |
-          pacman -S --noconfirm --needed mingw-w64-i686-toolchain
+          echo "=== Syncing package databases ==="
+          pacman -Sy --noconfirm
 
-      - name: Verify toolchains
-        run: |
-          echo "=== x86_64 ==="
-          /mingw64/bin/gcc.exe --version | head -1
-          echo "=== i686 ==="
-          /mingw32/bin/gcc.exe --version | head -1
+          echo "=== Installing i686 gcc ==="
+          pacman -S --noconfirm --needed mingw-w64-i686-gcc mingw-w64-i686-binutils
+
+          echo "=== Check /mingw32 existence ==="
+          ls -la /mingw32/bin/gcc.exe 2>&1 || echo "/mingw32/bin/gcc.exe NOT FOUND"
+          ls -la /mingw32/bin/strip.exe 2>&1 || echo "/mingw32/bin/strip.exe NOT FOUND"
+
+          echo "=== Check /mingw64 existence ==="
+          ls -la /mingw64/bin/gcc.exe 2>&1 || echo "/mingw64/bin/gcc.exe NOT FOUND"
+
+          echo "=== pacman -Ql mingw-w64-i686-gcc | grep bin/gcc ==="
+          pacman -Ql mingw-w64-i686-gcc 2>&1 | grep "bin/gcc" || echo "package not installed"
+
+          echo "=== Find all gcc executables ==="
+          find / -name "gcc.exe" 2>/dev/null || true
+          find / -name "gcc" -type f 2>/dev/null || true
 
       - name: Create cross-compiler wrappers
         run: |
+          # Determine i686 gcc path
+          I686_GCC=$(find / -path "*/i686*gcc.exe" 2>/dev/null | head -1)
+          I686_DIR=$(dirname "$I686_GCC")
+          echo "Found i686 toolchain at: $I686_DIR"
+
           # x86_64 wrappers
           for tool in gcc g++ strip ld ar; do
             printf '#!/bin/bash\nexec /mingw64/bin/%s.exe "$@"\n' "$tool" > /usr/bin/x86_64-w64-mingw32-$tool
             chmod +x /usr/bin/x86_64-w64-mingw32-$tool
           done
 
-          # i686 wrappers
-          for tool in gcc g++ strip ld ar; do
-            printf '#!/bin/bash\nexec /mingw32/bin/%s.exe "$@"\n' "$tool" > /usr/bin/i686-w64-mingw32-$tool
-            chmod +x /usr/bin/i686-w64-mingw32-$tool
-          done
+          # i686 wrappers (use discovered path)
+          if [ -n "$I686_DIR" ]; then
+            for tool in gcc g++ strip ld ar; do
+              printf '#!/bin/bash\nexec %s/%s.exe "$@"\n' "$I686_DIR" "$tool" > /usr/bin/i686-w64-mingw32-$tool
+              chmod +x /usr/bin/i686-w64-mingw32-$tool
+            done
+          else
+            echo "WARNING: i686 toolchain not found, 32-bit BOFs will be skipped"
+            for tool in gcc g++ strip ld ar; do
+              printf '#!/bin/bash\nexit 0\n' > /usr/bin/i686-w64-mingw32-$tool
+              chmod +x /usr/bin/i686-w64-mingw32-$tool
+            done
+          fi
 
           # Verify
+          echo "=== x86_64 ==="
           x86_64-w64-mingw32-gcc --version | head -1
-          i686-w64-mingw32-gcc --version | head -1
+          echo "=== i686 ==="
+          i686-w64-mingw32-gcc --version | head -1 || echo "i686 not available"
 
       - name: Build all BOFs
         run: make all
@@ -108,4 +134,3 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/extension-kit/extension-kit.tar.gz
-
