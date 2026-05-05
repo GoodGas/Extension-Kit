@@ -31,25 +31,32 @@ jobs:
             mingw-w64-x86_64-toolchain
             mingw-w64-i686-toolchain
 
-      - name: Create cross-compiler symlinks
+      - name: Verify toolchains installed
         run: |
-          # MINGW64 tools → x86_64-w64-mingw32-* names
-          ln -sf /mingw64/bin/gcc.exe /usr/bin/x86_64-w64-mingw32-gcc
-          ln -sf /mingw64/bin/g++.exe /usr/bin/x86_64-w64-mingw32-g++
-          ln -sf /mingw64/bin/strip.exe /usr/bin/x86_64-w64-mingw32-strip
-          ln -sf /mingw64/bin/ld.exe /usr/bin/x86_64-w64-mingw32-ld
-          ln -sf /mingw64/bin/ar.exe /usr/bin/x86_64-w64-mingw32-ar
+          echo "=== MINGW64 (x86_64) ==="
+          ls /mingw64/bin/gcc.exe
+          /mingw64/bin/gcc.exe --version | head -1
+          echo "=== MINGW32 (i686) ==="
+          ls /mingw32/bin/gcc.exe
+          /mingw32/bin/gcc.exe --version | head -1
 
-          # MINGW32 tools → i686-w64-mingw32-* names
-          ln -sf /mingw32/bin/gcc.exe /usr/bin/i686-w64-mingw32-gcc
-          ln -sf /mingw32/bin/g++.exe /usr/bin/i686-w64-mingw32-g++
-          ln -sf /mingw32/bin/strip.exe /usr/bin/i686-w64-mingw32-strip
-          ln -sf /mingw32/bin/ld.exe /usr/bin/i686-w64-mingw32-ld
-          ln -sf /mingw32/bin/ar.exe /usr/bin/i686-w64-mingw32-ar
+      - name: Create cross-compiler wrappers
+        run: |
+          # x86_64 wrappers
+          for tool in gcc g++ strip ld ar; do
+            printf '#!/bin/bash\nexec /mingw64/bin/%s.exe "$@"\n' "$tool" > /usr/bin/x86_64-w64-mingw32-$tool
+            chmod +x /usr/bin/x86_64-w64-mingw32-$tool
+          done
+
+          # i686 wrappers
+          for tool in gcc g++ strip ld ar; do
+            printf '#!/bin/bash\nexec /mingw32/bin/%s.exe "$@"\n' "$tool" > /usr/bin/i686-w64-mingw32-$tool
+            chmod +x /usr/bin/i686-w64-mingw32-$tool
+          done
 
           # Verify
-          x86_64-w64-mingw32-gcc --version
-          i686-w64-mingw32-gcc --version
+          x86_64-w64-mingw32-gcc --version | head -1
+          i686-w64-mingw32-gcc --version | head -1
 
       - name: Build all BOFs
         run: make all
