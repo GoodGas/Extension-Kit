@@ -15,17 +15,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cross-compilers
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential make \
-            gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 \
-            gcc-mingw-w64-i686 g++-mingw-w64-i686
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make
+            mingw-w64-x86_64-toolchain
+            mingw-w64-i686-toolchain
 
       - name: Build all BOFs
         run: make all
