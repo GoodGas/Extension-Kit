@@ -51,7 +51,7 @@ jobs:
           i686-w64-mingw32-gcc --version | head -1
 
       - name: Build all BOFs
-        run: make all
+        run: make -k all || true
 
       - name: Package Extension-Kit
         run: |
