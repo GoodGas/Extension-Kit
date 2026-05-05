@@ -29,15 +29,16 @@ jobs:
           install: >-
             make
             mingw-w64-x86_64-toolchain
-            mingw-w64-i686-toolchain
 
-      - name: Verify toolchains installed
+      - name: Install i686 toolchain
         run: |
-          echo "=== MINGW64 (x86_64) ==="
-          ls /mingw64/bin/gcc.exe
+          pacman -S --noconfirm --needed mingw-w64-i686-toolchain
+
+      - name: Verify toolchains
+        run: |
+          echo "=== x86_64 ==="
           /mingw64/bin/gcc.exe --version | head -1
-          echo "=== MINGW32 (i686) ==="
-          ls /mingw32/bin/gcc.exe
+          echo "=== i686 ==="
           /mingw32/bin/gcc.exe --version | head -1
 
       - name: Create cross-compiler wrappers
@@ -107,3 +108,4 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/extension-kit/extension-kit.tar.gz
+
