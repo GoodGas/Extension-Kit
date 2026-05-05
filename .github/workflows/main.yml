@@ -1,0 +1,78 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.2.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cross-compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential make \
+            gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 \
+            gcc-mingw-w64-i686 g++-mingw-w64-i686
+
+      - name: Build all BOFs
+        run: make all
+
+      - name: Package Extension-Kit
+        run: |
+          mkdir -p release/extension-kit
+          cp extension-kit.axs release/extension-kit/
+
+          for dir in AD-BOF Creds-BOF Elevation-BOF Execution-BOF Injection-BOF LateralMovement-BOF Postex-BOF Process-BOF SAL-BOF SAR-BOF; do
+            if [ -d "$dir" ]; then
+              mkdir -p "release/extension-kit/${dir}"
+              # Copy compiled BOF objects
+              if [ -d "${dir}/_bin" ]; then
+                cp -r "${dir}/_bin" "release/extension-kit/${dir}/"
+              fi
+              # Copy AxScript files
+              find "$dir" -name "*.axs" | while read f; do
+                cp --parents "$f" release/extension-kit/
+              done
+            fi
+          done
+
+          cd release
+          tar -czf extension-kit.tar.gz extension-kit/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-kit
+          path: release/extension-kit.tar.gz
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: Extension-Kit ${{ inputs.version }}
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: true
+          files: |
+            artifacts/extension-kit/extension-kit.tar.gz
