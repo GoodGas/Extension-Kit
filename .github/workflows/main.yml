@@ -34,18 +34,18 @@ jobs:
       - name: Create cross-compiler symlinks
         run: |
           # MINGW64 tools → x86_64-w64-mingw32-* names
-          ln -sf /mingw64/bin/gcc.exe /usr/local/bin/x86_64-w64-mingw32-gcc
-          ln -sf /mingw64/bin/g++.exe /usr/local/bin/x86_64-w64-mingw32-g++
-          ln -sf /mingw64/bin/strip.exe /usr/local/bin/x86_64-w64-mingw32-strip
-          ln -sf /mingw64/bin/ld.exe /usr/local/bin/x86_64-w64-mingw32-ld
-          ln -sf /mingw64/bin/ar.exe /usr/local/bin/x86_64-w64-mingw32-ar
+          ln -sf /mingw64/bin/gcc.exe /usr/bin/x86_64-w64-mingw32-gcc
+          ln -sf /mingw64/bin/g++.exe /usr/bin/x86_64-w64-mingw32-g++
+          ln -sf /mingw64/bin/strip.exe /usr/bin/x86_64-w64-mingw32-strip
+          ln -sf /mingw64/bin/ld.exe /usr/bin/x86_64-w64-mingw32-ld
+          ln -sf /mingw64/bin/ar.exe /usr/bin/x86_64-w64-mingw32-ar
 
           # MINGW32 tools → i686-w64-mingw32-* names
-          ln -sf /mingw32/bin/gcc.exe /usr/local/bin/i686-w64-mingw32-gcc
-          ln -sf /mingw32/bin/g++.exe /usr/local/bin/i686-w64-mingw32-g++
-          ln -sf /mingw32/bin/strip.exe /usr/local/bin/i686-w64-mingw32-strip
-          ln -sf /mingw32/bin/ld.exe /usr/local/bin/i686-w64-mingw32-ld
-          ln -sf /mingw32/bin/ar.exe /usr/local/bin/i686-w64-mingw32-ar
+          ln -sf /mingw32/bin/gcc.exe /usr/bin/i686-w64-mingw32-gcc
+          ln -sf /mingw32/bin/g++.exe /usr/bin/i686-w64-mingw32-g++
+          ln -sf /mingw32/bin/strip.exe /usr/bin/i686-w64-mingw32-strip
+          ln -sf /mingw32/bin/ld.exe /usr/bin/i686-w64-mingw32-ld
+          ln -sf /mingw32/bin/ar.exe /usr/bin/i686-w64-mingw32-ar
 
           # Verify
           x86_64-w64-mingw32-gcc --version
